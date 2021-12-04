@@ -1,11 +1,10 @@
 import 'dart:developer';
-
 import 'package:agora_video_call/utils/token_call.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:async';
-
 import 'CallPage.dart';
+import 'chat_page_2.dart';
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -151,6 +150,31 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                 ),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.4,
+                  child: MaterialButton(
+                    onPressed: (){
+                      Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) {
+                        return ChatPage2();
+                      }));
+                    },
+                    height: 40,
+                    color: Colors.blueAccent,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Text(
+                          'Demo Chat',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        Icon(
+                          Icons.arrow_forward,
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -170,6 +194,7 @@ class _MyHomePageState extends State<MyHomePage> {
     await _handleCameraAndMic(Permission.microphone);
 
     await calls.commonApiCallResponse(
+        "RtcTokenBuilderSample.php",
         {
           "channelName": myController.text,
           "uId": myId.text,
@@ -179,7 +204,7 @@ class _MyHomePageState extends State<MyHomePage> {
       Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CallPage(channelName: myController.text, token: value.toString(), id: int.parse(myId.text) ),
+            builder: (context) => CallPage(channelName: myController.text, token: value.toString(), id: int.parse(myId.text), callType: 'p' ),
           ));
     });
   }
@@ -194,6 +219,7 @@ class _MyHomePageState extends State<MyHomePage> {
     await _handleCameraAndMic(Permission.microphone);
 
     await calls.commonApiCallResponse(
+        "RtcTokenBuilderSample.php",
         {
           "channelName": myController.text,
           "uId": myId.text,

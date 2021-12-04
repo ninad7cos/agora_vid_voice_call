@@ -1,12 +1,13 @@
 import 'dart:developer';
 import 'package:http/http.dart';
 
-const urlR  = 'http://192.168.0.114/book/php/sample/RtcTokenBuilderSample.php';
+const urlR  = 'http://192.168.0.114/book/php/sample/';
 class ApiCalls {
-  Future <dynamic> commonApiCallResponse(Map<String, dynamic> body) async {
+  Future <dynamic> commonApiCallResponse( String url, Map<String, dynamic> body) async {
+    url = urlR + url;
     log('--');
     try {
-      Response response = await post(Uri.parse(urlR), body: body);
+      Response response = await post(Uri.parse(url), body: body);
       log("$urlR------------>>>>>>${response.statusCode}<----response---->", time: DateTime.now());
       if(response.statusCode == 200) {
         return (response.body);
