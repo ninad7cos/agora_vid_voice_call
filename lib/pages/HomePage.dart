@@ -12,8 +12,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final myController = TextEditingController();
-  final myId = TextEditingController();
+  final myController = TextEditingController(text: "023");
+  final myId = TextEditingController(text: "1");
   bool _validateError = false;
   ApiCalls calls = ApiCalls();
   @override
@@ -21,7 +21,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text('Agora Group Video Calling'),
+        title: Text('Group Video Calling'),
         elevation: 0,
       ),
       body: SafeArea(
@@ -33,13 +33,12 @@ class _MyHomePageState extends State<MyHomePage> {
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                Container(
-                  child: Image.asset('assets/agora-logo.png'),
-                  height: MediaQuery.of(context).size.height * 0.1,
-                ),
-                Padding(padding: EdgeInsets.only(top: 20)),
+                // Container(
+                //   child: Image.asset('assets/agora-logo.png'),
+                //   height: MediaQuery.of(context).size.height * 0.1,
+                // ),
                 Text(
-                  'Agora Group Video Call Demo',
+                  'Group Video Call Demo',
                   style: TextStyle(
                       color: Colors.black,
                       fontSize: 20,
@@ -175,6 +174,45 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                 ),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.4,
+                  child: MaterialButton(
+                    onPressed: ()async{
+                      await _handleCameraAndMic(Permission.camera);
+                      await _handleCameraAndMic(Permission.microphone);
+                      await _handleCameraAndMic(Permission.bluetooth);
+                      await calls.commonApiCallResponse(
+                          "RtcTokenBuilderSample.php",
+                          {
+                            "channelName": myController.text,
+                            "uId": myId.text,
+                          }
+                      ).then((value) {
+                        log(value.toString());
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CallPage(channelName: myController.text, token: value.toString(), id: int.parse(myId.text), callType: 'broadcast' ),
+                            ));
+                      });
+                    },
+                    height: 40,
+                    color: Colors.blueAccent,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Text(
+                          'Broadcast',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        Icon(
+                          Icons.arrow_forward,
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -189,9 +227,9 @@ class _MyHomePageState extends State<MyHomePage> {
           ? _validateError = true
           : _validateError = false;
     });
-
     await _handleCameraAndMic(Permission.camera);
     await _handleCameraAndMic(Permission.microphone);
+    await _handleCameraAndMic(Permission.bluetooth);
 
     await calls.commonApiCallResponse(
         "RtcTokenBuilderSample.php",
@@ -204,7 +242,7 @@ class _MyHomePageState extends State<MyHomePage> {
       Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CallPage(channelName: myController.text, token: value.toString(), id: int.parse(myId.text), callType: 'p' ),
+            builder: (context) => CallPage(channelName: myController.text, token: value.toString(), id: int.parse(myId.text), callType: 'video' ),
           ));
     });
   }
@@ -217,6 +255,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     await _handleCameraAndMic(Permission.camera);
     await _handleCameraAndMic(Permission.microphone);
+    await _handleCameraAndMic(Permission.bluetooth);
 
     await calls.commonApiCallResponse(
         "RtcTokenBuilderSample.php",
@@ -229,7 +268,7 @@ class _MyHomePageState extends State<MyHomePage> {
       Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CallPage(channelName: myController.text,token: value.toString(), id: int.parse(myId.text), callType: 'audio',),
+            builder: (context) => CallPage(channelName: myController.text, token: value.toString(), id: int.parse(myId.text), callType: 'audio',),
           ));
     });
 
@@ -237,7 +276,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _handleCameraAndMic(Permission permission) async {
     final status = await permission.request();
-    print("CAMERA___________________------------________________-------------");
+    print("${permission.toString()}___________________------$status------________________-------------");
     print(status);
   }
 }

@@ -11,8 +11,13 @@ class CallPage extends StatefulWidget {
   final String callType;
   final String token;
   final int id;
-  const CallPage({Key? key,  required this.channelName,  required this.callType,  required this.token,  required this.id}) : super(key: key);
-  
+  const CallPage(
+      {Key? key,
+      required this.channelName,
+      required this.callType,
+      required this.token,
+      required this.id})
+      : super(key: key);
 
   @override
   _CallPageState createState() => _CallPageState();
@@ -23,16 +28,6 @@ class _CallPageState extends State<CallPage> {
   final _infoStrings = <String>[];
   bool muted = false;
   RtcEngine? _engine;
-
-  @override
-  void dispose() {
-    // clear users
-    _users.clear();
-    // destroy sdk
-    _engine!.leaveChannel();
-    _engine!.destroy();
-    super.dispose();
-  }
 
   @override
   void initState() {
@@ -51,23 +46,42 @@ class _CallPageState extends State<CallPage> {
       });
       return;
     }
-    if(widget.callType != 'audio'){
+    if (widget.callType == 'video') {
+      log("video", name: "CALL TYPE");
       await _initAgoraRtcEngineV();
-    }else{
+    }
+    if (widget.callType == 'broadcast') {
+      log("broadcast", name: "CALL TYPE");
+      await _initAgoraRtcEngineB();
+    } else if (widget.callType == 'audio') {
+      log("audio", name: "CALL TYPE");
       await _initAgoraRtcEngineA();
     }
     _addAgoraEventHandlers();
     // await _engine.enableWebSdkInteroperability(true);
-    await _engine!.joinChannel(widget.token, widget.channelName, null, widget.id);  //-----------------JoinChannel
+    await _engine!.joinChannel(widget.token, widget.channelName, null,
+        widget.id); //-----------------JoinChannel
   }
 
-  /// Create agora sdk instance and initialize
+  ///Video
   Future<void> _initAgoraRtcEngineV() async {
     _engine = await RtcEngine.create(appID);
     await _engine!.enableVideo();
     await _engine!.enableAudio();
     await _engine!.adjustAudioMixingPlayoutVolume(100);
   }
+
+  ///Video Broadcasting
+  Future<void> _initAgoraRtcEngineB() async {
+    _engine = await RtcEngine.create(appID);
+    await _engine!.enableVideo();
+    await _engine!.setChannelProfile(ChannelProfile
+        .LiveBroadcasting); //------------------------for Live Broadcasting
+    await _engine!.setClientRole(ClientRole.Broadcaster);
+    await _engine!.adjustAudioMixingPlayoutVolume(100);
+  }
+
+  ///Audio
   Future<void> _initAgoraRtcEngineA() async {
     _engine = await RtcEngine.create(appID); //----------------------Create
     await _engine!.disableVideo();
@@ -87,7 +101,7 @@ class _CallPageState extends State<CallPage> {
       },
       joinChannelSuccess: (channel, uid, elapsed) {
         setState(() {
-          log("_____________-----------Joined-------------_____________");
+          log("_____________-----------joinChannelSuccess-------------_____________");
           final info = 'onJoinChannel: $channel, uid: $uid';
           _infoStrings.add(info);
         });
@@ -103,13 +117,14 @@ class _CallPageState extends State<CallPage> {
           final info = 'userJoined: $uid';
           _infoStrings.add(info);
           _users.add(uid);
-          log("_____________-----------Joined-------------_____________");
+          log("_____________-----------userJoined-------------_____________");
           print(uid);
         });
       },
       userOffline: (uid, reason) {
         setState(() {
           final info = 'userOffline: $uid , reason: $reason';
+          log("_____________-----------userOffline-------------_____________");
           _infoStrings.add(info);
           _users.remove(uid);
         });
@@ -183,22 +198,21 @@ class _CallPageState extends State<CallPage> {
       body: Center(
         child: Stack(
           children: <Widget>[
-            widget.callType == 'audio'?
-            Center(
-              child: Container(
-                width: size.width,
-                  height: size.height,
-                color: Colors.green[200],
-                child: Center(
-                    child: Lottie.asset(
-                      "assets/call.json",
-                      height: size.height*0.2
+            widget.callType == 'audio'
+                ? Center(
+                    child: Container(
+                      width: size.width,
+                      height: size.height,
+                      color: Colors.green[200],
+                      child: Center(
+                        child: Lottie.asset("assets/call.json",
+                            height: size.height * 0.2),
+                      ),
                     ),
-                ),
-              ),
-            )
-                :
-            _viewRows(),
+                  )
+                : widget.callType == 'video'
+                    ? _viewRows()
+                    : bViewRows(),
             _toolbar(),
           ],
         ),
@@ -206,7 +220,6 @@ class _CallPageState extends State<CallPage> {
     );
   }
 
-  /// Helper function to get list of native views
   List<Widget> _getRenderViews() {
     final List<StatefulWidget> list = [];
     list.add(RtcLocalView.SurfaceView());
@@ -217,6 +230,11 @@ class _CallPageState extends State<CallPage> {
   /// Video view wrapper
   Widget _videoView(view) {
     return Expanded(child: Container(child: view));
+  }
+
+  Widget bViewRows() {
+    final views = _getRenderViews();
+    return Container(child: views[0]);
   }
 
   /// Video view row wrapper
@@ -256,12 +274,12 @@ class _CallPageState extends State<CallPage> {
         ));
       case 4:
         return Container(
-            child: Column(
-              children: <Widget>[
-                _expandedVideoRow(views.sublist(0, 2)),
-                _expandedVideoRow(views.sublist(2, 4))
-              ],
-            ),
+          child: Column(
+            children: <Widget>[
+              _expandedVideoRow(views.sublist(0, 2)),
+              _expandedVideoRow(views.sublist(2, 4))
+            ],
+          ),
         );
       default:
     }
@@ -269,6 +287,16 @@ class _CallPageState extends State<CallPage> {
   }
 
   void _onCallEnd(BuildContext context) {
+    try {
+      _users.clear();
+      // destroy
+      if (_engine != null) {
+        _engine!.leaveChannel();
+        _engine!.destroy();
+      }
+    } catch (e) {
+      print("Error at onCallEnd----------------------------$e");
+    }
     Navigator.pop(context);
   }
 

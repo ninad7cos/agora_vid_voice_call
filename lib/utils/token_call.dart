@@ -1,7 +1,7 @@
 import 'dart:developer';
 import 'package:http/http.dart';
 
-const urlR  = 'http://192.168.0.114/book/php/sample/';
+const urlR  = 'http://www.fishcary.com/fishcary/api/Agora_RTC_RTM/sample/';
 class ApiCalls {
   Future <dynamic> commonApiCallResponse( String url, Map<String, dynamic> body) async {
     url = urlR + url;
